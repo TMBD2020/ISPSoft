@@ -1,0 +1,565 @@
+@extends('layouts.app')
+
+@section('title', 'Purchase Product')
+
+@section('content')
+
+
+        <!-- BEGIN: Content-->
+<div class="app-content content">
+    <div class="content-wrapper">
+        <div class="content-wrapper-before"></div>
+        <div class="content-header row">
+            <div class="content-header-left col-md-4 col-12 mb-2">
+                <h3 class="content-header-title" id="tabOption">@yield("title")</h3>
+            </div>
+            <div class="content-header-right col-md-8 col-12">
+
+
+            </div>
+        </div>
+        <div class="content-body"><!-- Zero configuration table -->
+            <section id="configuration">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-content collapse show">
+                                <div class="card-body card-dashboard">
+
+                                    <div class="card">
+                                        <div class="col-lg-12 col-xs-12  col-md-12 col-sm-12">
+                                            <form id="purchaseForm" method="post">
+                                                {{ csrf_field() }}
+                                                <div class="row">
+                                                    <input type="hidden" id="action" name="action">
+                                                    <input type="hidden" id="id" name="id">
+
+                                                    <div class="col-md-3">
+                                                        <label for="store_date">Date <code>*</code></label>
+                                                        <input type="text" class="form-control datepicker" value="{{ date("d/m/Y") }}" name="store_date" id="store_date" required>
+                                                    </div>
+
+                                                    <div class="col-md-3">
+                                                        <label for="voucher_no">Voucher No <code>*</code></label>
+                                                        <input type="text" min="0" class="form-control text-center"  name="voucher_no" id="voucher_no" required>
+                                                    </div>
+
+                                                    <div  class="col-md-12"><br></div>
+                                                    <div class="col-md-3">
+                                                        <label for="purchaser_id">Purchaser name <code>*</code></label>
+                                                        <input type="text" class="form-control" value="{{ Auth::user()->name }}" readonly name="" id="" required>
+                                                        <input type="hidden" value="{{ Auth::user()->id }}" name="purchaser_id" id="purchaser_id">
+                                                    </div>
+
+                                                    <div class="col-md-3">
+                                                        <label for="vendor_id">Vendor name <code>*</code></label>
+                                                        <select class="form-control select2" name="vendor_id" id="vendor_id" required>
+                                                            @foreach($vendors as $vendor)
+                                                                <option value="{{ $vendor->id }}">{{ $vendor->vendor_name  }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+
+                                                    <div class="col-md-3">
+                                                        <label for="vendor_memo_no">Vendor Slip/Memo No <code>*</code></label>
+                                                        <input type="text" class="form-control text-center"  name="vendor_memo_no" id="vendor_memo_no" required>
+                                                    </div>
+
+                                                    <div class="col-md-3">
+                                                        <label for="product_status">Status <code>*</code></label>
+                                                        <select class="form-control" name="product_status" id="product_status" required>
+                                                            <option value="Brand New">Brand New</option>
+                                                            <option value="Like New">Like New</option>
+                                                            <option value="Used">Used</option>
+                                                        </select>
+                                                    </div>
+                                                    <div  class="col-md-12"><br></div>
+                                                    <div class="col-md-3">
+                                                        <label for="product_id">Product name <code>*</code></label>
+                                                        <div class="input-group">
+                                                        <select class="form-control select2-duel-group" name="" id="product_id">
+                                                            <option value=""></option>
+                                                        </select>
+                                                            <div class="input-group-addon btn-primary ft-plus addItem "  style="cursor: pointer" title="Add Brand"></div>
+
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-md-3">
+                                                        <label for="product_qty">Qty <code>*</code></label>
+                                                        <input type="number" min="1" class="form-control text-center"  name="" id="product_qty">
+                                                    </div>
+
+                                                    <div class="col-md-3">
+                                                        <label for="product_unit_price">Unit Price <code>*</code></label>
+                                                        <input type="number"  min="1" class="form-control text-center"  name="" id="product_unit_price">
+                                                    </div>
+
+                                                    <div class="col-md-3">
+
+                                                        <button type="button" class="btn btn-primary mt-1 mb-0 add" style="    margin-top: 25px !important">Add</button>
+                                                    </div>
+                                                </div>
+
+                                                <div class="mytable" style="display: none;">
+                                                <br>
+                                                <br>
+
+                                                <table class="table table-bordered border-striped " >
+                                                    <thead>
+                                                    <tr>
+                                                        {{--<th class="text-center">SL</th>--}}
+                                                        <th class="text-center">Product Name</th>
+                                                        <th class="text-center">Serial No</th>
+                                                        <th class="text-center">Qty</th>
+                                                        <th class="text-center">Unit Price</th>
+                                                        <th class="text-center">#</th>
+                                                    </tr>
+                                                    </thead>
+                                                    <tbody class="product_list"></tbody>
+                                                </table>
+
+                                                <div class="row">
+                                                    <div class="col-md-3">
+                                                        <label for="other_expense">Other Expense </label>
+                                                        <input type="number"  min="0" class="form-control text-right" value="0" name="other_expense" id="other_expense">
+                                                    </div>
+                                                    <div class="col-md-9">
+                                                        <label for="remarks">Remarks </label>
+                                                        <textarea name="remarks" id="remarks" class="form-control" rows="1" style="resize: vertical;"></textarea>
+                                                    </div>
+                                                </div>
+
+                                                <div class="row" style="font-size: 18px">
+                                                    <div class="col-md-12">
+                                                        <div class="pull-right">
+                                                            <b class="text-info">Grand Total : </b> <b class="text-primary allGtotal"></b>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <button style="display: none;" type="submit" class="btn btn-primary mt-1 mb-0 save pull-right">Save</button>
+                                                </div>
+                                            </form>
+                                        </div>
+
+                                    </div>
+
+
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <!--/ Zero configuration table -->
+        </div>
+    </div>
+</div>
+<!-- END: Content-->
+
+
+<div class="modal fade text-left" id="ProductAdd" tabindex="-1" role="dialog" aria-labelledby="myModalLabel8" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success white">
+                <h4 class="modal-title white" id="myModalLabel8">Add Product</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="ProductAddForm" method="post">
+
+                <input type="hidden" id="id" name="id">
+                <input type="hidden" id="action" name="action" value="1">
+
+                <div class="modal-body">
+                    @csrf
+                    <div class="col-md-12">
+                        <div class="row">
+                            <label for="product_name" class="col-sm-4">Product Name<code>*</code></label>
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control"  name="product_name" id="product_name" required autocomplete="off">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <label for="brand_id" class="col-sm-4">Brand</label>
+                            <div class="col-sm-8">
+
+                                <div class="input-group">
+                                    <select class="form-control select2-single-group" required name="brand_id" id="brand_id">
+                                        <option></option>
+                                    </select>
+
+                                    <div class="input-group-addon btn-primary ft-plus addBrand"  style="cursor: pointer" title="Add Brand"></div>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn grey btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-danger save">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade text-left" id="AddProductBrand" tabindex="-1" role="dialog" aria-labelledby="myModalLabel8" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success white">
+                <h4 class="modal-title white" id="myModalLabel8">Add Brand</h4>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="AddBrandForm" method="post">
+
+                <input type="hidden" id="id" name="id">
+                <input type="hidden" id="action" name="action" value="1">
+
+                <div class="modal-body">
+                    @csrf
+                    <div class="col-md-12">
+                        <div class="row">
+                            <label for="brand_name" class="col-sm-4">Brand Name<code>*</code></label>
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control"  name="brand_name" id="brand_name" required autocomplete="off">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <label for="brand_description" class="col-sm-4">Description</label>
+                            <div class="col-sm-8">
+                                <textarea class="form-control"  name="brand_description" id="brand_description" placeholder="optional"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn grey btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-danger save">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<style>
+    form .row{
+        margin-top:10px;
+    }
+</style>
+@endsection
+@section("page_script")
+    <script type="text/javascript">
+
+        productSelectList();
+        brandSelectList();
+        var brandTable;
+        var sl =0;
+        var myproduct =[];
+        $(document).ready(function () {
+            var myclick = 0;
+            $(document).on('click', '.add', function () {
+
+                var id          = Number($("#product_id").val());
+                var qty         = Number($("#product_qty").val());
+                var unit_price  = Number($("#product_unit_price").val());
+                if(id!=""){
+                    if(qty!=""){
+                        if(unit_price!=""){
+                            $("#purchaseForm .mytable").show();
+                            $("#purchaseForm .save").show();
+                            if (myproduct.indexOf(id) == -1)
+                            {
+                                myclick++;
+                                var name          = $("#product_id :selected").text();
+                                myproduct.push(id);
+
+                                var element = $(".product_list");
+
+                                var newqty=0;
+                                var total_price=0;
+                                for(var i=0; i<qty; i++){
+                                    sl++;
+                                    newqty++;
+                                    var serial=1000;
+                                    total_price+=unit_price;
+                                    var html = "<tr class='rows"+id+"'>" ;
+//                                "<td class='text-center'>" + sl +"</td>";
+                                    if(i==0){
+                                        html +="<td rowspan='"+qty+"'>" + name +"</td>" ;
+                                    }
+                                    html +="<td class='text-center'>" +
+                                            "<input type='hidden' name='product_id[]' value='"+id+"'>" +
+                                            "<input type='hidden' name='product_qty[]' value='"+1+"'>" +
+                                            "<input type='hidden' name='unit_price[]' value='"+unit_price+"'>" +
+                                            "<input type='number' name='product_serial[]'  value='"+ (serial+newqty) +"' min='"+(serial)+"' class='text-center' ></td>" +
+                                            "<td class='text-center'>" + 1 +"</td>" +
+                                            "<td class='text-center'>" + unit_price +"</td>" ;
+                                    if(i==0){
+                                        html +="<td class='text-center text-danger' rowspan='"+qty+"' style='font-size: 17px;cursor:pointer'>" +
+                                                "<i class='ft-trash remove' id='"+id+"' qty='"+qty+"'></i></td>" ;
+                                    }
+                                    html +="</tr>";
+                                    element.append(html);
+                                }
+                                var html="<tr class='rows"+id+"'>" +
+                                        "<th colspan='2' class='text-right'>Total</th>" +
+                                        "<th class='text-center qty'>"+qty+"</th>" +
+                                        "<th class='text-center price' id='totalP"+id+"'>"+total_price+"</th>" +
+                                        "</tr>";
+                                element.append(html);
+
+                                var myqty=0;
+                                var myprice=0;
+                                $.each($(".qty"),function(key,value){
+                                    var qty = Number($(this).text());
+                                    myqty+=qty;
+                                });
+                                $.each($(".price"),function(key,value){
+                                    var price = Number($(this).text());
+                                    myprice+=price;
+                                });
+
+
+                                var html="<tr class='click"+myclick+"'>" +
+                                        "<th colspan='2' class='text-right'>Sub Total</th>" +
+                                        "<th class='text-center grandQ'>"+myqty+"</th>" +
+                                        "<th class='text-center grandT'>"+myprice+"</th>" +
+                                        "</tr>";
+                                element.append(html);
+                                if(myclick>0){
+                                    $(".click"+(myclick-1)).remove();
+                                }
+                                var expense =  Number($("#other_expense").val());
+                                $(".allGtotal").text(myprice+expense);
+
+                                //$('#product_id option[value="'+id+'"]').remove();
+                                $('#product_id').val("").trigger("change");
+                                $("#product_qty").val("");
+                                $("#product_unit_price").val("");
+                            }else{
+                                alert("This Product Already Added!");
+                            }
+                        }else{
+                            alert("Unit Price cannot blank left!");
+                            $("#product_unit_price").focus();
+                            return false;
+                        }
+                    }else{
+                        alert("Quantity cannot blank left!");
+                        $("#product_qty").focus();
+                        return false;
+                    }
+                }else{
+                    alert("Product cannot blank left!");
+                    $("#product_id").focus();
+                    return false;
+                }
+            });
+
+            $(document).on('click', '.remove', function () {
+                var id = $(this).attr("id");
+                var qty = $(this).attr("qty");
+                var price =  Number($("#totalP"+id).text());
+                var expense =  Number($("#other_expense").val());
+                $(".rows"+id).remove();
+                var grand_qty = Number($(".grandQ").text());
+                var grand_total = Number($(".grandT").text());
+                var final_q = grand_qty-qty;
+                var final_t = grand_total-price;
+                $(".grandQ").text(final_q);
+                $(".grandT").text(final_t);
+                $(".allGtotal").text(final_t+expense);
+                var index = myproduct.indexOf(id);
+                myproduct.splice(index, 1);
+                myclick--;
+                if(myclick==0){
+                    $(".click1").remove();
+                    $("#purchaseForm .mytable").hide();
+                    $("#purchaseForm .save").hide();
+                }
+            });
+
+            $(document).on('input keyup', '#other_expense', function () {
+
+                var expense = Number($(this).val());
+                var grand_total = Number($(".grandT").text());
+                $(".allGtotal").text(grand_total+expense);
+
+
+            });
+
+            $(document).on('submit', "#purchaseForm", function (e) {
+                e.preventDefault();
+
+                $(".save").text("Saving...").prop("disabled", true);
+                $.ajax({
+                    type: "POST",
+                    url: "{{ url('new_product_purchase') }}",
+                    data: new FormData(this),
+                    processData: false,
+                    contentType: false,
+                    cache: false,
+                    success: function (response)
+                    {
+                        console.log(response)
+                        if (response == 1) {
+                            $(".mytable").hide();
+                            $("#purchaseForm").trigger("reset");
+                            toastr.success('Data Saved Successfully!','Success');
+                        }
+                        else {
+                            toastr.warning( 'Data Cannot Saved. Try again!', 'Warning');
+                        }
+                        $(".save").text("Save").prop("disabled", false);
+                    },
+                    error: function (request, status, error) {
+                        console.log(request.responseText);
+                        toastr.warning( 'Server Error. Try again!', 'Warning');
+                        $(".save").text("Save").prop("disabled", false);
+                    }
+                });
+            });
+
+            $(document).on('submit', "#ProductAddForm", function (e) {
+                e.preventDefault();
+
+                $("#ProductAddForm .save").text("Saving...").prop("disabled", true);
+                $.ajax({
+                    type: "POST",
+                    url: "{{ url('save_product') }}",
+                    data: new FormData(this),
+                    processData: false,
+                    contentType: false,
+                    cache: false,
+                    success: function (response)
+                    {
+                        //console.log(response);
+                        if (response == 1) {
+                            $("#ProductAdd").modal("hide");
+                            $("#ProductAddForm").trigger("reset");
+                            toastr.success('Data Saved Successfully!','Success');
+                            productSelectList();
+                        }
+                        else {
+                            toastr.warning( 'Data Cannot Saved. Try again!', 'Warning');
+                        }
+                        $(".save").text("Save").prop("disabled", false);
+                    },
+                    error: function (request, status, error) {
+                        console.log(request.responseText);
+                        toastr.warning( 'Server Error. Try again!', 'Warning');
+                        $(".save").text("Save").prop("disabled", false);
+                    }
+                });
+            });
+
+            $(document).on('click', '.addItem', function () {
+
+                $("#ProductAdd").modal("show");
+                var _this = "#ProductAddForm ";
+                $(_this+" #action").val(1);
+                $(_this+" #id").val("");
+                $(_this).trigger("reset");
+            });
+
+            $(document).on('click', '.addBrand', function () {
+                $("#AddProductBrand").modal("show");
+                var _this = "#AddProductBrand ";
+                $(_this+" #action").val(1);
+                $(_this+" #id").val("");
+                $(_this).trigger("reset");
+            });
+
+            $(document).on('submit', "#AddBrandForm", function (e) {
+                e.preventDefault();
+                var _this = "#AddPersonForm ";
+                $(_this +" .save").text("Saving...").prop("disabled", true);
+                $.ajax({
+                    type: "POST",
+                    url: "{{ url('save_product_brand') }}",
+                    data: new FormData(this),
+                    processData: false,
+                    contentType: false,
+                    cache: false,
+                    success: function (response)
+                    {
+                        if (response == 1) {
+                            $("#AddProductBrand").modal("hide");
+
+                            $("#AddBrandForm #action").val(1);
+                            $("#AddBrandForm").trigger("reset");
+                            toastr.success('Data Saved Successfully!','Success');
+                            brandSelectList();
+                        }
+                        else {
+                            toastr.warning( 'Data Cannot Saved. Try aging!', 'Warning');
+                        }
+                        $(_this +" .save").text("Save").prop("disabled", false);
+                    },
+                    error: function (request, status, error) {
+                        //console.log(request.responseText);
+                        toastr.warning( 'Server Error. Try aging!', 'Warning');
+                        $(_this +" .save").text("Save").prop("disabled", false);
+                    }
+                });
+            });
+
+
+        });
+
+        function productSelectList(){
+            var info = "_token={{csrf_token()}}"
+            $.ajax({
+                type: "POST",
+                url: "{{url('product_list_show')}}",
+                data: info,
+                success: function (response) {
+                    if(response!=0){
+
+                        var element = $("#product_id");
+                        element.empty();
+                        var json = JSON.parse(response);
+                        $.each(json,function(key,value){
+                            element.append("<option value='"+value.id+"'>"+value.product_name+"</option>");
+                        });
+
+                    }else{
+                        toastr.warning( 'Server Error. Try again!', 'Warning');
+                    }
+                }
+            });
+        }
+
+        function brandSelectList(){
+            var info = "_token={{csrf_token()}}"
+            $.ajax({
+                type: "POST",
+                url: "{{url('product_brand_show')}}",
+                data: info,
+                success: function (response) {
+                    if(response!=0){
+
+                        var element = $("#brand_id");
+                        element.empty();
+                        var json = JSON.parse(response);
+                        $.each(json,function(key,value){
+                            element.append("<option value='"+value.id+"'>"+value.brand_name+"</option>");
+                        });
+
+                    }else{
+                        toastr.warning( 'Server Error. Try again!', 'Warning');
+                    }
+                }
+            });
+        }
+
+
+    </script>
+
+@endsection

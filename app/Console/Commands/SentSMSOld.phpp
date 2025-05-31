@@ -1,0 +1,152 @@
+<?php
+
+namespace App\Console\Commands;
+
+use Illuminate\Console\Command;
+use DB;
+use App\Models\TmbdUsers;
+class SentSMS extends Command
+{
+    /**
+     * The name and signature of the console command.
+     *
+     * @var string
+     */
+    protected $signature = 'sent:sms';
+
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
+    protected $description = 'sent sms scheduler in one minute.';
+
+    /**
+     * Execute the console command.
+     *
+     * @return int
+     */
+    public function handle()
+    {
+		
+		$now = date("Y-m-d H:i:s");
+
+        //	DB::table("test")->insert(["times"=>$now]);
+			
+        $user = "mdtariqulislamtawkir@gmail.com";
+        $pass = "93678660";
+        $sms_sender = "8809612442476";
+        $route_id = "10";
+		
+			   $smsList = DB::table("sms_history")
+            //->whereBetween("sms_schedule_time",[$from ,$to])
+            ->where("is_retry", 1)->limit(1)->get();
+
+        if (count($smsList) > 0) {
+
+            $akbar = 0;
+            foreach ($smsList as $row) {
+
+                $id = $row->id;
+
+                $bal = TmbdUsers::find($row->company_id);
+                if ($bal->sms_api) {
+                    $api = json_decode($bal->sms_api);
+                    $post_url = "http://services.powersms.biz/sendSms";
+
+                    $sms_balance = $bal ? $bal->sms_balance : 0;
+                    $non_masking_rate = $api->cost;
+
+                    if ($sms_balance > 0) {
+                        if ($sms_balance >= $non_masking_rate) {
+
+
+                            $to = trim($row->sms_receiver);
+                            $message = trim($row->sms_text);
+
+                            if (strlen($to) == 11) {
+                                $to = "88" . $to;
+
+                                if (strlen($to) == 13) {
+                                    $sms_receiver = $to;
+                                    $msg = $message;
+
+                                    $post_string = "user_id=$user&user_password=$pass&route_id=$route_id&sms_sender=$sms_sender&sms_receiver=$sms_receiver&sms_text=$msg&campaignType=T";
+
+                                    //print_r($post_string);
+                                    $request = curl_init($post_url);
+                                    curl_setopt($request, CURLOPT_RETURNTRANSFER, 1);
+                                    curl_setopt($request, CURLOPT_POSTFIELDS, $post_string);
+                                    curl_setopt($request, CURLOPT_SSL_VERIFYPEER, FALSE);
+                                    $post_response = curl_exec($request);
+                                    curl_close($request); 
+                                    //$post_response=$post_string;
+
+                                    $sent_time = date("Y-m-d H:i:s");
+
+                                    $bal->sms_balance = $bal->sms_balance - $non_masking_rate;
+                                    //\Log::info( $bal->sms_balance);
+                                    $bal->last_sms_sent = $sent_time;
+                                    $bal->save();
+
+
+                                    DB::table("sms_history")->where(["id" => $id])
+                                        ->update(
+                                            [
+                                                "is_retry" => 0,
+                                                "sms_status" => "Sent",
+                                                "sent_time" => $sent_time,
+                                                "response" => $post_response,
+                                                //"sms_count"	=> $array['SmsCount']
+                                            ]
+                                        );
+                                }
+
+                            } else {
+                                DB::table("sms_history")->where(["id" => $id])
+                                    ->update(
+                                        [
+                                            "is_retry" => 0,
+                                            "sms_status" => 'Receiver Error'
+                                        ]
+                                    );
+                            }
+                        } else {
+
+                            DB::table("sms_history")->where(["id" => $id])
+                                ->update(
+                                    [
+                                        "is_retry" => 0,
+                                        "sms_status" => 'Receiver Error'
+                                    ]
+                                );
+                        }
+
+
+                    } else {
+
+                        DB::table("sms_history")->where(["id" => $id])
+                            ->update(
+                                [
+                                    "is_retry" => 0,
+                                    "response" => 'No balance'
+                                ]
+                            );
+                    }
+                } else {
+
+                    DB::table("sms_history")->where(["id" => $id])
+                        ->update(
+                            [
+                                "is_retry" => 0,
+                                "response" => 'No balance'
+                            ]
+                        );
+                }
+            }
+        }
+
+
+        return Command::SUCCESS;
+    }
+}
